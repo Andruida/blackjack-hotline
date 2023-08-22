@@ -93,6 +93,7 @@ describe("Game phases", () => {
         test('should return true if the player has enough money', () => {
             game.balance = 100;
             expect(game.placeBet(50)).toBe(true);
+            game.finalizeBet();
             expect(game.bet).toBe(50);
             expect(game.balance).toBe(50);
         })
@@ -100,6 +101,7 @@ describe("Game phases", () => {
         test('should change the round phase to dealing', () => {
             game.balance = 100;
             game.placeBet(50);
+            game.finalizeBet();
             expect(game.roundPhase).toBe(Blackjack.RoundPhases.DEALING);
             expect(() => game.placeBet(50)).toThrow('Invalid round phase');
         })
@@ -110,6 +112,7 @@ describe("Game phases", () => {
         beforeEach(() => {
             game = new Blackjack('test', 2, 1000);
             game.placeBet(100)
+            game.finalizeBet()
         })
 
         test('should deal 2 cards to the player and 2 cards to the dealer', () => {
@@ -151,6 +154,7 @@ describe("Game phases", () => {
             game.deck.push(new Card(CardColor.HEARTS, CardValue.JACK)); // player
 
             game.placeBet(100);
+            game.finalizeBet();
             game.deal();
         })
 
@@ -187,8 +191,4 @@ describe("Game phases", () => {
         })
     })
 
-    describe("Resolving", () => {
-        
-
-    })
 })

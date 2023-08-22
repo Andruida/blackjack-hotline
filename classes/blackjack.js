@@ -1,3 +1,4 @@
+const BlackjackModel = require('../models/blackjack.js');
 const { Card, CardColor, CardValue, CardRealValue } = require('./card.js');
 
 
@@ -18,6 +19,7 @@ class Blackjack {
     dealersSecretCard = null;
     playersHand = [];
     bet = 0;
+    betToBePlaced = 0;
     roundPhase = Blackjack.RoundPhases.BETTING;
 
     constructor(uuid, numberOfDecks, balance) {
@@ -79,14 +81,27 @@ class Blackjack {
         if (this.roundPhase != Blackjack.RoundPhases.BETTING) {
             throw new Error('Invalid round phase');
         }
-        if (this.balance < amount) {
+        
+        if (amount <= 0 || this.balance < amount) {
             return false;
         }
-        this.bet = amount;
-        this.balance -= amount;
 
+        this.betToBePlaced = amount;
+
+        return true;
+    }
+
+    finalizeBet() {
+        if (this.roundPhase != Blackjack.RoundPhases.BETTING) {
+            throw new Error('Invalid round phase');
+        }
+        if (this.betToBePlaced <= 0 || this.balance < this.betToBePlaced) {
+            return false;
+        }
+        this.bet = this.betToBePlaced;
+        this.balance -= this.betToBePlaced;
+        this.betToBePlaced = 0;
         this.roundPhase = Blackjack.RoundPhases.DEALING;
-
         return true;
     }
 
@@ -181,6 +196,54 @@ class Blackjack {
         return didShuffle;
     }
 
+    save() {
+        return BlackjackModel.findOneAndUpdate(
+            {uuid: this.uuid},
+            {
+                uuid: this.uuid,
+                deck: this.deck,
+                numberOfDecks: this.numberOfDecks,
+                balance: this.balance,
+                dealersHand: this.dealersHand,
+                dealersSecretCard: this.dealersSecretCard,
+                playersHand: this.playersHand,
+                bet: this.bet,
+                betToBePlaced: this.betToBePlaced,
+                roundPhase: this.roundPhase
+            },
+            {upsert: true, new: true}
+        );
+    }
+
+    static async load(uuid) {
+        let gameState = await BlackjackModel.findOne({uuid: uuid}).exec();
+        if (gameState == null) {
+            return null;
+        }
+        let blackjack = new Blackjack(gameState.uuid, gameState.numberOfDecks, gameState.balance);
+
+        blackjack.deck = gameState.deck.map(Card.fromDB);
+
+        blackjack.dealersHand = gameState.dealersHand.map(Card.fromDB);
+        blackjack.dealersSecretCard = Card.fromDB(gameState.dealersSecretCard);
+        blackjack.playersHand = gameState.playersHand.map(Card.fromDB);
+        blackjack.bet = gameState.bet;
+        blackjack.betToBePlaced = gameState.betToBePlaced;
+        blackjack.roundPhase = this.RoundPhases[gameState.roundPhase.match(/\((.*)\)/)[1]];
+        return blackjack;
+    }
+
+    static delete(uuid) {
+        return BlackjackModel.deleteMany({uuid: uuid}).exec();
+    }
+
+    delete() {
+        return Blackjack.delete(this.uuid);
+    }
+
+    static async exists(uuid) {
+        return await BlackjackModel.exists({uuid: uuid}).exec() ? true : false;
+    }
 }
 
 module.exports = Blackjack;

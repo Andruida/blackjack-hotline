@@ -4,3 +4,4 @@ coverage/
 *.key
 config.json
 log.txt
+data/

@@ -47,6 +47,13 @@ class Card {
         this.color = color;
         this.value = value;
     }
+
+    static fromDB(card) {
+        if (card == null) return null;
+        let color = card.color.match(/\((.*)\)/)[1]
+        let value = card.value.match(/\((.*)\)/)[1]
+        return new Card(CardColor[color], CardValue[value]);
+    }
 }
 
 module.exports = {
