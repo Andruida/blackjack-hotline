@@ -20,6 +20,7 @@ describe('Hand value', () => {
         let playersHand = [
             new Card(CardColor.HEARTS, CardValue.ACE), 
             new Card(CardColor.HEARTS, CardValue.KING), 
+            new Card(CardColor.HEARTS, CardValue.KING), 
             new Card(CardColor.HEARTS, CardValue.ACE)
         ];
         let value = Blackjack.getHandValue(playersHand);

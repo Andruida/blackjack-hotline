@@ -51,16 +51,32 @@ class Blackjack {
     }
 
     static getHandValue(array) {
-        let softValue = 0;
+        let hardValue = 0;
+        let aces = 0;
         array.forEach(card => {
             if (card.value == CardValue.ACE) {
-                softValue += (softValue + 11 <= 21) ? 11 : 1;
-            } else {
-                softValue += CardRealValue[card.value];
+                aces++
             }
-            
+            hardValue += CardRealValue[card.value];
         })
-        return softValue;
+        for (let i = 0; i < aces; i++) {
+            if (hardValue + 10 <= 21) {
+                hardValue += 10;
+            }
+        }
+        return hardValue;
+    }
+
+    static hasBlackjack(array) {
+        return (Blackjack.getHandValue(array) == 21 && array.length == 2);
+    }
+
+    dealerHasBlackjack() {
+        return Blackjack.hasBlackjack(this.dealersHand);
+    }
+
+    playerHasBlackjack() {
+        return Blackjack.hasBlackjack(this.playersHand);
     }
 
     getDealersHandValue() {
@@ -100,7 +116,7 @@ class Blackjack {
         }
         this.bet = this.betToBePlaced;
         this.balance -= this.betToBePlaced;
-        this.betToBePlaced = 0;
+        // this.betToBePlaced = 0;
         this.roundPhase = Blackjack.RoundPhases.DEALING;
         return true;
     }
@@ -152,9 +168,11 @@ class Blackjack {
         this.dealersHand.push(this.dealersSecretCard);
         this.dealersSecretCard = null;
 
-        while (this.getDealersHandValue() < 17) {
-            this.dealersHand.push(this.deck.pop());
-        }
+        if (this.getPlayersHandValue() <= 21) {
+            while (this.getDealersHandValue() < 17) {
+                this.dealersHand.push(this.deck.pop());
+            }
+        }   
         this.roundPhase = Blackjack.RoundPhases.RESOLVING;
     }
 
@@ -172,7 +190,13 @@ class Blackjack {
             winnings = this.bet * 2;
         }
         else if (player == dealer) {
-            winnings = this.bet;
+            if (this.playerHasBlackjack() && dealer == 21 && !this.dealerHasBlackjack()) {
+                winnings = this.bet * 2.5;
+            } else if (!this.playerHasBlackjack() && this.dealerHasBlackjack()) {
+                winnings = 0;
+            } else {
+                winnings = this.bet;
+            }
         }
 
         this.balance += winnings;
@@ -186,6 +210,10 @@ class Blackjack {
 
     }
 
+    /**
+     * 
+     * @returns {bool} wether the deck was shuffled or not
+     */
     shuffleIfNeeded() {
         let didShuffle = false;
         if (this.roundPhase == Blackjack.RoundPhases.BETTING || this.roundPhase == Blackjack.RoundPhases.RESOLVING

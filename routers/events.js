@@ -49,6 +49,47 @@ router.post("/input/newGame", async (req, res) => {
         case "0":
             if (hasGame) {
                 response.push(NCCO.text("Folytatjuk a játékot."))
+                let game = await Blackjack.load(req.body.from);
+                switch (game.roundPhase) {
+                    case Blackjack.RoundPhases.BETTING:
+                        response.push(...NCCO.betPrompt(game.balance))
+                        break
+                    case Blackjack.RoundPhases.DEALING:
+                        let hasBlackjack = game.deal()
+                        if (hasBlackjack) {
+                            response.push(...NCCO.dealingABlackjack(game))
+                            let winnings = game.pay()
+                            response.push(...NCCO.resolving(game, winnings))
+                            if (game.balance <= 0) {
+                                game = new Blackjack(req.body.from, 2, 1000)
+                                response.push(...NCCO.newGame(game.numberOfDecks))
+                                response.push(...NCCO.betPrompt(game.balance))
+                                await game.save()
+                            }
+                        } else {
+                            response.push(...NCCO.playing(game))
+                        }
+                        break;
+                    case Blackjack.RoundPhases.PLAYING:
+                        response.push(...NCCO.playing(game))
+                        break
+                    case Blackjack.RoundPhases.RESOLVING:
+                        if (game.getPlayersHandValue() > 21) {
+                            response.push(...NCCO.bust(game))
+                        } else {
+                            response.push(...NCCO.stand(game))
+                        }
+                        let winnings = game.pay()
+                        response.push(...NCCO.resolving(game, winnings))
+                        if (game.balance <= 0) {
+                            game = new Blackjack(req.body.from, 2, 1000)
+                            response.push(...NCCO.newGame(game.numberOfDecks))
+                            response.push(...NCCO.betPrompt(game.balance))
+                            await game.save()
+                        }
+                        break
+                    }
+                    await game.save()
             } else {
                 response.push(NCCO.text("Sajnos nincs nyitott asztala."))
                 response.push(...NCCO.intro(hasGame, false))
@@ -143,19 +184,106 @@ router.post("/input/finalizeBet", async (req, res) => {
             break
         case "1":
             game.finalizeBet()
-            game.deal()
-            await game.save()
+            let hasBlackjack = game.deal()
             // response.push(...NCCO.deal(game))
-            response.push(NCCO.text("A "+game.bet+" kredit tétet megtette."))
-            response.push(...NCCO.playing(game))
+            let didShuffle = game.shuffleIfNeeded()
+            response.push(NCCO.text(game.bet+" kredit téttel játszik."))
+            if (didShuffle) {
+                response.push(NCCO.text("A paklit újrakevertem."))
+            }
+            if (hasBlackjack) {
+                response.push(...NCCO.dealingABlackjack(game))
+                let winnings = game.pay()
+                response.push(...NCCO.resolving(game, winnings))
+                if (game.balance <= 0) {
+                    game = new Blackjack(req.body.from, 2, 1000)
+                    response.push(...NCCO.newGame(game.numberOfDecks))
+                    response.push(...NCCO.betPrompt(game.balance))
+                    await game.save()
+                }
+            } else {
+                response.push(...NCCO.playing(game))
+            }
+            await game.save()
             break
         default:
-            response.push(NCCO.text("Nem értettem, kérjük próbálja újra!"))
+            response.push(NCCO.text("Nem értettem, kérem próbálja újra!"))
             response.push(...NCCO.finalizeBet(game.betToBePlaced))
             break
     }
 
     res.json(response)
+
+})
+
+router.post("/input/play", async (req, res) => {
+    let game = await Blackjack.load(req.body.from);
+    let response = [];
+    if (game == null) {
+        res.json(NCCO.intro(false, false))
+        return
+    }
+    var digit = -1;
+    if (req.body.dtmf && req.body.dtmf.digits && req.body.dtmf.digits.length == 1) {
+        digit = req.body.dtmf.digits[0];
+    } else if (req.body.speech && req.body.speech.results && req.body.speech.results.length > 0) {
+        for (let result of req.body.speech.results) {
+            if (result.confidence <= 0.5) {
+                continue
+            }
+            if (result.text.startsWith("kérek") || result.text.startsWith("húz")) {
+                digit = "1"
+            } else if (result.text.startsWith("megáll") || result.text.startsWith("áll")) {
+                digit = "0"
+            }
+        }
+    }
+
+    switch (digit) {
+        case "0":
+            game.stand()
+            response.push(...NCCO.stand(game))
+            let winnings = game.pay()
+            await game.save()
+            response.push(...NCCO.resolving(game, winnings))
+            if (game.balance <= 0) {
+                game = new Blackjack(req.body.from, 2, 1000)
+                response.push(...NCCO.newGame(game.numberOfDecks))
+                response.push(...NCCO.betPrompt(game.balance))
+                await game.save()
+            }
+            break;
+        case "1":
+            let canHit = game.hit()
+            response.push(...NCCO.hit(game)) 
+            if (canHit) {
+                response.push(...NCCO.playing(game))
+            } else {
+                if (game.getPlayersHandValue() > 21) {
+                    response.push(...NCCO.bust(game))
+                } else {
+                    response.push(...NCCO.stand(game))
+                }
+                let winnings = game.pay()
+                response.push(...NCCO.resolving(game, winnings))
+                if (game.balance <= 0) {
+                    game = new Blackjack(req.body.from, 2, 1000)
+                    response.push(...NCCO.newGame(game.numberOfDecks))
+                    response.push(...NCCO.betPrompt(game.balance))
+                    await game.save()
+                }
+                
+            }
+            await game.save()
+            break;
+        default:
+            response.push(NCCO.text("Nem értettem, kérem próbálja újra!"))
+            response.push(...NCCO.playing(game))
+            break;
+    }
+
+    res.json(response)
+
 
 })
 

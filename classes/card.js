@@ -22,6 +22,7 @@ const CardValue = Object.freeze({
 })
 
 const CardRealValue = Object.freeze({
+    [CardValue.ACE]: 1,
     [CardValue.TWO]: 2,
     [CardValue.THREE]: 3,
     [CardValue.FOUR]: 4,
@@ -34,6 +35,29 @@ const CardRealValue = Object.freeze({
     [CardValue.JACK]: 10,
     [CardValue.QUEEN]: 10,
     [CardValue.KING]: 10
+})
+
+const CardColorName = Object.freeze({
+    [CardColor.HEARTS]: 'kőr',
+    [CardColor.DIAMONDS]: 'káró',
+    [CardColor.SPADES]: 'pikk',
+    [CardColor.CLUBS]: 'treff'
+})
+
+const CardValueName = Object.freeze({
+    [CardValue.ACE]: 'ász',
+    [CardValue.TWO]: 'kettes',
+    [CardValue.THREE]: 'hármas',
+    [CardValue.FOUR]: 'négyes',
+    [CardValue.FIVE]: 'ötös',
+    [CardValue.SIX]: 'hatos',
+    [CardValue.SEVEN]: 'hetes',
+    [CardValue.EIGHT]: 'nyolcas',
+    [CardValue.NINE]: 'kilences',
+    [CardValue.TEN]: 'tizes',
+    [CardValue.JACK]: 'jumbó',
+    [CardValue.QUEEN]: 'dáma',
+    [CardValue.KING]: 'király'
 })
 
 class Card {
@@ -53,6 +77,10 @@ class Card {
         let color = card.color.match(/\((.*)\)/)[1]
         let value = card.value.match(/\((.*)\)/)[1]
         return new Card(CardColor[color], CardValue[value]);
+    }
+
+    toString() {
+        return CardColorName[this.color] + ' ' + CardValueName[this.value];
     }
 }
 
