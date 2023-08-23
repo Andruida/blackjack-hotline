@@ -17,7 +17,8 @@ module.exports = {
         if (welcome) {
             response.push({
                 "action": "talk",
-                "text": hasGame ? "Köszöntjük újra a telefonos Bleckdzseck világában!" : "Üdvözöljük a telefonos Bleckdzseck világában!",
+                "text": hasGame ? "Köszöntjük újra a telefonos Bleckdzseck világában!" 
+                        : "Üdvözöljük a telefonos Bleckdzseck világában!",
                 "language": "hu-HU",
             })
         }
@@ -62,7 +63,8 @@ module.exports = {
         return [
             {
                 "action": "talk",
-                "text": "<speak>Önnek "+balance+" kreditje van még. Kérem mondja, vagy gépelje be a tét összegét.<break time='3s'/></speak>",
+                "text": "<speak>Önnek "+balance+" kreditje van még. Kérem mondja, vagy "+
+                        "gépelje be a tét összegét.<break time='3s'/></speak>",
                 "language": "hu-HU",
                 "bargeIn": true,
                 "loop": 0
@@ -86,7 +88,9 @@ module.exports = {
         return [
             {
                 "action": "talk",
-                "text": "<speak>Úgy értettem, hogy "+bet+" kreditet szeretne feltenni. Igen vagy nem válasszal erősítse meg a tétet. A billentyűzeten az egyes a beleegyezés és nullás az elutasítás.<break time='3s'/></speak>",
+                "text": "<speak>Úgy értettem, hogy "+bet+" kreditet szeretne feltenni. "+
+                        "Igen vagy nem válasszal erősítse meg a tétet. A billentyűzeten az "+
+                        "egyes a beleegyezés és nullás az elutasítás.<break time='3s'/></speak>",
                 "language": "hu-HU",
                 "bargeIn": true,
                 "loop": 0
@@ -111,9 +115,9 @@ module.exports = {
         return [
             {
                 "action": "talk",
-                "text": "<speak>Az osztó nyitott lapja "+game.dealersHand[0].toString()+", értéke így "+
-                        game.getDealersHandValue()+" . Az Ön lapjai: "+usersCards+", értékük így "+
-                        game.getPlayersHandValue()+" . Ha szeretne húzni nyomja meg az egyes gombot,"+
+                "text": "<speak>Az Ön lapjai: "+usersCards+", értékük így "+
+                        game.getPlayersHandValue()+" . Az osztó nyitott lapja "+game.dealersHand[0].toString()+
+                        ", értéke így "+game.getDealersHandValue()+" . Ha szeretne húzni nyomja meg az egyes gombot,"+
                         " vagy mondja, hogy <emphasis>húzz</emphasis>, ha megállna, nyomja meg a "+
                         "nullás gombot, vagy mondja, hogy <emphasis>állj</emphasis>! <break time='3s'/></speak>",
                 "loop": 0,
@@ -153,9 +157,9 @@ module.exports = {
         return [
             {
                 "action": "talk",
-                "text": "<speak>Az osztó lapjai: "+dealersCards+", értékük így "+
-                        game.getDealersHandValue()+" . Az Ön lapjai: "+usersCards+", értékük így "+
-                        game.getPlayersHandValue()+" .</speak>",
+                "text": "<speak>Az Ön lapjai: "+usersCards+", értékük így "+
+                        game.getPlayersHandValue()+" . Az osztó lapjai: "+dealersCards+", értékük így "+
+                        game.getDealersHandValue()+" .</speak>",
                 "language": "hu-HU",
             }
         ]
@@ -168,7 +172,7 @@ module.exports = {
             {
                 "action": "talk",
                 "text": "<speak>Az Ön lapjai: "+playersCards+", értékük így "+
-                        game.getPlayersHandValue()+". Sajnos túllépte a 21-et, így vesztett.</speak>",
+                        game.getPlayersHandValue()+" . Sajnos túllépte a 21-et, így vesztett.</speak>",
                 "language": "hu-HU",
             }
         ]
@@ -182,9 +186,9 @@ module.exports = {
         return [
             {
                 "action": "talk",
-                "text": "<speak>Az osztó lapjai: "+dealersCards+", értékük így "+
-                        game.getDealersHandValue()+". Az Ön lapjai: "+usersCards+", értékük így "+
-                        game.getPlayersHandValue()+". Gratulálunk Blekdzsekje van!</speak>",
+                "text": "<speak>Az Ön lapjai: "+usersCards+", értékük így "+
+                        game.getPlayersHandValue()+" . Az osztó lapjai: "+dealersCards+", értékük így "+
+                        game.getDealersHandValue()+" . Gratulálunk Blekdzsekje van!</speak>",
                 "language": "hu-HU",
             }
         ]
