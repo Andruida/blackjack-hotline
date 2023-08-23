@@ -168,7 +168,7 @@ class Blackjack {
         this.dealersHand.push(this.dealersSecretCard);
         this.dealersSecretCard = null;
 
-        if (this.getPlayersHandValue() <= 21) {
+        if (this.getPlayersHandValue() <= 21 && !this.playerHasBlackjack()) {
             while (this.getDealersHandValue() < 17) {
                 this.dealersHand.push(this.deck.pop());
             }
@@ -187,11 +187,15 @@ class Blackjack {
             winnings = 0;
         }
         else if (dealer > 21 || player > dealer) {
-            winnings = this.bet * 2;
+            if (this.playerHasBlackjack()) {
+                winnings = this.bet * 2.5;
+            } else {
+                winnings = this.bet * 2;
+            }
         }
         else if (player == dealer) {
             if (this.playerHasBlackjack() && dealer == 21 && !this.dealerHasBlackjack()) {
-                winnings = this.bet * 2.5;
+                winnings = this.bet * 2;
             } else if (!this.playerHasBlackjack() && this.dealerHasBlackjack()) {
                 winnings = 0;
             } else {

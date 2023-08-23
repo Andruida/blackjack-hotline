@@ -1,7 +1,7 @@
 const config = require('../config')
 
 module.exports = {
-    text(text, language = "hu-HU", loop = 1, bargeIn = false) {
+    text(text, bargeIn = true, language = "hu-HU", loop = 1) {
         return {
             "action": "talk",
             "text": text,
@@ -20,6 +20,7 @@ module.exports = {
                 "text": hasGame ? "Köszöntjük újra a telefonos Bleckdzseck világában!" 
                         : "Üdvözöljük a telefonos Bleckdzseck világában!",
                 "language": "hu-HU",
+                "bargeIn": true,
             })
         }
 
@@ -27,10 +28,10 @@ module.exports = {
             "action": "talk",
             "text": (hasGame ?
                 "<speak>Önnek már van egy nyitott asztala. " +
-                "Ha azt szeretné folytatni, nyomja meg a nullás gombot, vagy mondja hogy folytatás."
+                "Ha azt szeretné folytatni, nyomja meg a nullás gombot."
                 : "<speak>")
-                + "Új játék kezdéséhez nyomja meg az egyes gombot, vagy mondja, hogy új játék." +
-                "A szabályok meghallgatásához nyomja meg a kettes gombot, vagy mondja, hogy szabályok.<break time='3s'/></speak>",
+                + "Új játék kezdéséhez nyomja meg az egyes gombot, vagy" +
+                "a szabályok meghallgatásához nyomja meg a kettes gombot.<break time='3s'/></speak>",
             "language": "hu-HU",
             "loop": 0,
             "bargeIn": true
@@ -38,13 +39,9 @@ module.exports = {
         response.push({
             "action": "input",
             "eventUrl": ["https://" + config.vonage.host + "/events/input/newGame"],
-            "type": ["dtmf", "speech"],
+            "type": ["dtmf"],
             "dtmf": {
                 "maxDigits": 1,
-            },
-            "speech": {
-                "language": "hu-HU",
-                "context": ["folytatás", "új játék", "szabályok"],
             }
         })
         return response
@@ -63,8 +60,8 @@ module.exports = {
         return [
             {
                 "action": "talk",
-                "text": "<speak>Önnek "+balance+" kreditje van még. Kérem mondja, vagy "+
-                        "gépelje be a tét összegét.<break time='3s'/></speak>",
+                "text": "<speak>Önnek "+balance+" kreditje van még. Kérem "+
+                        "gépelje be a tét összegét majd nyomja meg a kettőskeresztet.<break time='3s'/></speak>",
                 "language": "hu-HU",
                 "bargeIn": true,
                 "loop": 0
@@ -72,54 +69,25 @@ module.exports = {
             {
                 "action": "input",
                 "eventUrl": ["https://" + config.vonage.host + "/events/input/placeBet"],
-                "type": ["dtmf", "speech"],
+                "type": ["dtmf"],
                 "dtmf": {
                     "maxDigits": 6,
                     "submitOnHash": true,
-                },
-                "speech": {
-                    "language": "hu-HU",
-                }
-            }
-        ]
-    },
-
-    finalizeBet(bet) {
-        return [
-            {
-                "action": "talk",
-                "text": "<speak>Úgy értettem, hogy "+bet+" kreditet szeretne feltenni. "+
-                        "Igen vagy nem válasszal erősítse meg a tétet. A billentyűzeten az "+
-                        "egyes a beleegyezés és nullás az elutasítás.<break time='3s'/></speak>",
-                "language": "hu-HU",
-                "bargeIn": true,
-                "loop": 0
-            },
-            {
-                "action": "input",
-                "eventUrl": ["https://" + config.vonage.host + "/events/input/finalizeBet"],
-                "type": ["dtmf", "speech"],
-                "dtmf": {
-                    "maxDigits": 1,
-                },
-                "speech": {
-                    "language": "hu-HU",
-                    "context": ["igen", "nem"],
                 }
             }
         ]
     },
 
     playing(game) {
-        let usersCards = "<emphasis>"+game.playersHand.map(card => card.toString()).join(" és ")+"</emphasis>"
+        let usersCards = "<emphasis>"+game.playersHand.map(card => card.toString()).join(", ")+"</emphasis>"
         return [
             {
                 "action": "talk",
                 "text": "<speak>Az Ön lapjai: "+usersCards+", értékük így "+
                         game.getPlayersHandValue()+" . Az osztó nyitott lapja "+game.dealersHand[0].toString()+
                         ", értéke így "+game.getDealersHandValue()+" . Ha szeretne húzni nyomja meg az egyes gombot,"+
-                        " vagy mondja, hogy <emphasis>húzz</emphasis>, ha megállna, nyomja meg a "+
-                        "nullás gombot, vagy mondja, hogy <emphasis>állj</emphasis>! <break time='3s'/></speak>",
+                        "ha megállna, nyomja meg a "+
+                        "nullás gombot! <break time='3s'/></speak>",
                 "loop": 0,
                 "bargeIn": true,
                 "language": "hu-HU",
@@ -127,13 +95,9 @@ module.exports = {
             {
                 "action": "input",
                 "eventUrl": ["https://" + config.vonage.host + "/events/input/play"],
-                "type": ["dtmf", "speech"],
+                "type": ["dtmf"],
                 "dtmf": {
                     "maxDigits": 1,
-                },
-                "speech": {
-                    "language": "hu-HU",
-                    "context": ["húzz", "állj"],
                 }
             }
         ]
@@ -146,6 +110,7 @@ module.exports = {
                 "action": "talk",
                 "text": "<speak>Az új kártyája "+newCard+", ezzel az Ön kártyáinak értéke "+game.getPlayersHandValue()+" .</speak>",
                 "language": "hu-HU",
+                "bargeIn": true,
             }
         ]
     },
@@ -161,6 +126,7 @@ module.exports = {
                         game.getPlayersHandValue()+" . Az osztó lapjai: "+dealersCards+", értékük így "+
                         game.getDealersHandValue()+" .</speak>",
                 "language": "hu-HU",
+                "bargeIn": true,
             }
         ]
 
@@ -174,6 +140,7 @@ module.exports = {
                 "text": "<speak>Az Ön lapjai: "+playersCards+", értékük így "+
                         game.getPlayersHandValue()+" . Sajnos túllépte a 21-et, így vesztett.</speak>",
                 "language": "hu-HU",
+                "bargeIn": true,
             }
         ]
     },
@@ -190,6 +157,7 @@ module.exports = {
                         game.getPlayersHandValue()+" . Az osztó lapjai: "+dealersCards+", értékük így "+
                         game.getDealersHandValue()+" . Gratulálunk Blekdzsekje van!</speak>",
                 "language": "hu-HU",
+                "bargeIn": true,
             }
         ]
     },
@@ -199,7 +167,7 @@ module.exports = {
             return [
                 {
                     "action": "talk",
-                    "text": "<speak>Ön "+winnings+" kreditet nyert, így az egyenlege "+game.balance+" kredit. A játék véget ért. Ha szeretne új játékot kezdeni, mondja vagy gépelje be az új tét összegét.</speak>",
+                    "text": "<speak>Ön "+winnings+" kreditet nyert, így az egyenlege "+game.balance+" kredit. A játék véget ért. Ha szeretne új játékot kezdeni, gépelje be az új tét összegét, majd nyomjon kettőskeresztet.</speak>",
                     "language": "hu-HU",
                     "bargeIn": true,
                     "loop": 0
@@ -207,13 +175,10 @@ module.exports = {
                 {
                     "action": "input",
                     "eventUrl": ["https://" + config.vonage.host + "/events/input/placeBet"],
-                    "type": ["dtmf", "speech"],
+                    "type": ["dtmf"],
                     "dtmf": {
                         "maxDigits": 6,
                         "submitOnHash": true,
-                    },
-                    "speech": {
-                        "language": "hu-HU",
                     }
                 }
             ]
@@ -223,6 +188,7 @@ module.exports = {
                     "action": "talk",
                     "text": "<speak>Ön "+winnings+" kreditet nyert, így az egyenlege "+game.balance+" kredit. A játék véget ért. Sajnos kifogyott a kreditből, így ez az asztal lezárult.</speak>",
                     "language": "hu-HU",
+                    "bargeIn": true,
                 }
             ]
         }

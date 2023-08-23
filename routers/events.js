@@ -25,22 +25,6 @@ router.post("/input/newGame", async (req, res) => {
     var digit = -1;
     if (req.body.dtmf && req.body.dtmf.digits && req.body.dtmf.digits.length == 1) {
         digit = req.body.dtmf.digits[0];
-    } else if (req.body.speech && req.body.speech.results && req.body.speech.results.length > 0) {
-        for (let result of req.body.speech.results) {
-            if (result.confidence <= 0.5) {
-                continue
-            }
-            if (result.text.startsWith("folytat")) {
-                digit = "0"
-                break
-            } else if (result.text == "új játék" || result.text == "úgy játék") {
-                digit = "1"
-                break
-            } else if (result.text.startsWith("szabály")) {
-                digit = "2"
-                break
-            }
-        }
     }
 
     var response = []
@@ -129,14 +113,7 @@ router.post("/input/placeBet", async (req, res) => {
         didRecognize = true;
         triedNumber = parseInt(req.body.dtmf.digits)
         success = game.placeBet(triedNumber)
-    } else if (req.body.speech && req.body.speech.results && req.body.speech.results.length > 0) {
-        if (req.body.speech.results[0].confidence > 0.5 && parseInt(req.body.speech.results[0].text)) {
-            didRecognize = true;
-            triedNumber = parseInt(req.body.speech.results[0].text)
-            success = game.placeBet(triedNumber)
-        }
     }
-    await game.save()
 
     if (!didRecognize) {
         response.push(NCCO.text("Nem értettem, kérjük próbálja újra!"))
@@ -150,70 +127,30 @@ router.post("/input/placeBet", async (req, res) => {
         res.json(response)
         return
     }
-    response.push(...NCCO.finalizeBet(game.betToBePlaced))
-    res.json(response)
-})
 
-router.post("/input/finalizeBet", async (req, res) => {
-    let game = await Blackjack.load(req.body.from);
-    let response = [];
-    if (game == null) {
-        res.json(NCCO.intro(false, false))
-        return
+    game.finalizeBet()
+    let hasBlackjack = game.deal()
+    // response.push(...NCCO.deal(game))
+    let didShuffle = game.shuffleIfNeeded()
+    response.push(NCCO.text(game.bet+" kredit téttel játszik."))
+    if (didShuffle) {
+        response.push(NCCO.text("A paklit újrakevertem."))
     }
-    var digit = -1;
-    if (req.body.dtmf && req.body.dtmf.digits && req.body.dtmf.digits.length == 1) {
-        digit = req.body.dtmf.digits[0];
-    } else if (req.body.speech && req.body.speech.results && req.body.speech.results.length > 0) {
-        for (let result of req.body.speech.results) {
-            if (result.confidence <= 0.5) {
-                continue
-            }
-            if (result.text == "igen") {
-                digit = "1"
-            } else if (result.text == "nem") {
-                digit = "0"
-            }
-        }
-    }
-
-    switch (digit) {
-        case "0":
-            response.push(NCCO.text("A tétet nem fogadta el."))
+    if (hasBlackjack) {
+        response.push(...NCCO.dealingABlackjack(game))
+        let winnings = game.pay()
+        response.push(...NCCO.resolving(game, winnings))
+        if (game.balance <= 0) {
+            game = new Blackjack(req.body.from, 2, 1000)
+            response.push(...NCCO.newGame(game.numberOfDecks))
             response.push(...NCCO.betPrompt(game.balance))
-            break
-        case "1":
-            game.finalizeBet()
-            let hasBlackjack = game.deal()
-            // response.push(...NCCO.deal(game))
-            let didShuffle = game.shuffleIfNeeded()
-            response.push(NCCO.text(game.bet+" kredit téttel játszik."))
-            if (didShuffle) {
-                response.push(NCCO.text("A paklit újrakevertem."))
-            }
-            if (hasBlackjack) {
-                response.push(...NCCO.dealingABlackjack(game))
-                let winnings = game.pay()
-                response.push(...NCCO.resolving(game, winnings))
-                if (game.balance <= 0) {
-                    game = new Blackjack(req.body.from, 2, 1000)
-                    response.push(...NCCO.newGame(game.numberOfDecks))
-                    response.push(...NCCO.betPrompt(game.balance))
-                    await game.save()
-                }
-            } else {
-                response.push(...NCCO.playing(game))
-            }
             await game.save()
-            break
-        default:
-            response.push(NCCO.text("Nem értettem, kérem próbálja újra!"))
-            response.push(...NCCO.finalizeBet(game.betToBePlaced))
-            break
+        }
+    } else {
+        response.push(...NCCO.playing(game))
     }
-
+    await game.save()
     res.json(response)
-
 })
 
 router.post("/input/play", async (req, res) => {
@@ -226,17 +163,6 @@ router.post("/input/play", async (req, res) => {
     var digit = -1;
     if (req.body.dtmf && req.body.dtmf.digits && req.body.dtmf.digits.length == 1) {
         digit = req.body.dtmf.digits[0];
-    } else if (req.body.speech && req.body.speech.results && req.body.speech.results.length > 0) {
-        for (let result of req.body.speech.results) {
-            if (result.confidence <= 0.5) {
-                continue
-            }
-            if (result.text.startsWith("kérek") || result.text.startsWith("húz")) {
-                digit = "1"
-            } else if (result.text.startsWith("megáll") || result.text.startsWith("áll")) {
-                digit = "0"
-            }
-        }
     }
 
     switch (digit) {
