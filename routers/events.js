@@ -128,10 +128,11 @@ router.post("/input/placeBet", async (req, res) => {
         return
     }
 
+
+    let didShuffle = game.shuffleIfNeeded()
     game.finalizeBet()
     let hasBlackjack = game.deal()
     // response.push(...NCCO.deal(game))
-    let didShuffle = game.shuffleIfNeeded()
     response.push(NCCO.text(game.bet+" kredit téttel játszik."))
     if (didShuffle) {
         response.push(NCCO.text("A paklit újrakevertem."))
