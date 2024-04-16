@@ -9,7 +9,7 @@
   "author": "Andruida",
   "license": "ISC",
   "dependencies": {
-    "@vonage/server-sdk": "^2.11.2",
+    "@vonage/server-sdk": "^3.14.0",
     "date-format": "^4.0.14",
     "express": "^4.19.2",
     "mongoose": "^7.4.3",
